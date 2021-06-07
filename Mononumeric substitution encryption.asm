@@ -209,8 +209,8 @@ J6:     MOV     DL,[BX+SI]     ;PRINT THE STRING CHAR BY CHAR
         DEC     CX
         JCXZ    DONE5
         JMP     J6
-
-DONE5:  POP     CX
+DONE5:  
+        
         
 
 MAIN ENDP 
