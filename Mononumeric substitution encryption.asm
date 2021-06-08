@@ -1,35 +1,20 @@
 .DATA  
-msg1 DB  'Enter Number of Chars:-->$'  
+msg1 DB  10,13,'Enter Number of Chars:-->$'  
 msg2 DB  'Enter Message:-->$'  
 msg3 DB  10,13,'$'
 msg4 DB  'Encrypted Message:--> $'
 msg5 DB  'Decrypted Message-->$'
 string  DB  100   DUP(?)        ;005B
-table   DW  26    DUP(?)        ;00BF
+table   DW  26    DUP(?)        ;00BF  
+table1  DB  ' ',' ',1,'A',2,'B',3,'C',4,'D',5,'E',6,'F',7,'G',8,'H',9,'I',10,'J',11,'K',12,'L',13,'M',14,'N',15,'O',16,'P',17,'Q',18,'R',19,'S',20,'T',21,'U',22,'V',23,'W',24,'X',25,'Y',26,'Z'
 
 
 
 .CODE
-MAIN PROC                  
-        MOV     AX,@DATA        
+MAIN PROC  
+                       
+START:  MOV     AX,@DATA        
         MOV     DS,AX           ;ADDRESS FOR THE TABLE  
-        MOV     CX,26
-        MOV     AL,'A'
-        MOV     AH,1
-        LEA     BX,table        ;BX IS THE OFFSET 
-        MOV     SI,0
-        
-J1:     MOV     [BX+SI],AH      ;STORE TABLE TO USE IT LATER
-        INC     SI              ;TO GET THE WANTED VALUE
-        MOV     [BX+SI],AL      ; 2*I-2
-        INC     SI
-        INC     AL
-        INC     AH     
-        DEC     CX
-        JCXZ    DONE
-        JMP     J1       
-DONE:               
-        
         LEA     DX,msg1        ;CHANGE DX TO msg1
         MOV     AH,09H        
         INT     21H
@@ -73,14 +58,14 @@ DONE:
         MOV     SI,0000H
          
         
-J2:     MOV     AH,1           ;INPUT STRING  CHAR BY CHAR STORED IN VAR STRING
+J1:     MOV     AH,1           ;INPUT STRING  CHAR BY CHAR STORED IN VAR STRING
         INT     21H
         MOV     [BX+SI],AL
         
         INC     SI
         DEC     CL
         JCXZ    DONE1
-        JMP     J2
+        JMP     J1
 
 DONE1:  POP     CX             ;RESTORE  THE CX  
 
@@ -103,7 +88,7 @@ DONE1:  POP     CX             ;RESTORE  THE CX
         
         CLD
           
-J3:     LEA     DI,table       ;DECRYPT TH STRING USING THE TABLE  
+J2:     LEA     DI,table       ;DECRYPT TH STRING USING THE TABLE  
         MOV     AL,[BX+SI]
         
 L:      CMP     AL,[DI]
@@ -117,7 +102,7 @@ GOTIT:  SUB     DI,1
         INC     SI
         DEC     CL
         JCXZ    DONE2
-        JMP     J3 
+        JMP     J2 
         
 DONE2:  POP     CX
                      
@@ -126,7 +111,7 @@ DONE2:  POP     CX
         PUSH    CX
         MOV     SI,0    
             
-J4:     MOV     AL,[BX+SI]     ;PRINT THE STRING CHAR BY CHAR 
+J3:     MOV     AL,[BX+SI]     ;PRINT THE STRING CHAR BY CHAR 
         MOV     AH,0
         MOV     DL,10          ;ADJUST THE INT TO ASCII
         DIV     DL
@@ -144,13 +129,13 @@ J4:     MOV     AL,[BX+SI]     ;PRINT THE STRING CHAR BY CHAR
         MOV     AH,2
         INT     21H             
                    
-        MOV     DL,' '
+        MOV     DL,','
         MOV     AH,2           
         INT     21H
         INC     SI
         DEC     CX
         JCXZ    DONE3
-        JMP     J4
+        JMP     J3
 
 DONE3:  POP     CX
 
@@ -173,7 +158,7 @@ DONE3:  POP     CX
         PUSH    CX        
         CLD
           
-J5:     LEA     DI,table       ;DECRYPT TH STRING USING THE TABLE  
+J4:     LEA     DI,table       ;DECRYPT TH STRING USING THE TABLE  
         MOV     AL,[BX+SI]
         
 L1:     CMP     AL,[DI]
@@ -187,7 +172,7 @@ GOTIT1: ADD     DI,1
         INC     SI
         DEC     CL
         JCXZ    DONE4
-        JMP     J5 
+        JMP     J4 
         
 DONE4:  POP     CX 
          
@@ -196,22 +181,16 @@ DONE4:  POP     CX
 
         MOV     SI,0
         
-J6:     MOV     DL,[BX+SI]     ;PRINT THE STRING CHAR BY CHAR       
+J5:     MOV     DL,[BX+SI]     ;PRINT THE STRING CHAR BY CHAR       
         MOV     AH,2
         INT     21H
 
-                    
-                   
-        MOV     DL,' '
-        MOV     AH,2           
-        INT     21H
         INC     SI
         DEC     CX
         JCXZ    DONE5
-        JMP     J6
+        JMP     J5
 DONE5:  
         
-        
-
+        JMP     START
 MAIN ENDP 
 END MAIN 
