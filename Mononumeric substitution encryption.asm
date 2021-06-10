@@ -1,45 +1,24 @@
-.DATA  
-msg1 DB  10,13,'Enter Number of Chars:-->$'  
+.DATA    
 msg2 DB  'Enter Message:-->$'  
 msg3 DB  10,13,'$'
 msg4 DB  'Encrypted Message:--> $'
 msg5 DB  'Decrypted Message-->$'
-string  DB  100   DUP(?)        ;005B
-table  DB  ' ',' ',1,'A',2,'B',3,'C',4,'D',5,'E',6,'F',7,'G',8,'H',9,'I',10,'J',11,'K',12,'L',13,'M',14,'N',15,'O',16,'P',17,'Q',18,'R',19,'S',20,'T',21,'U',22,'V',23,'W',24,'X',25,'Y',26,'Z'
+string  DB  100,?,100   DUP(?)        ;005B
+table1  DB  ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'   
+table2  DB  0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26
 
 
 
 .CODE
 MAIN PROC  
                        
-START:  MOV     AX,@DATA        
-        MOV     DS,AX           ;ADDRESS FOR THE TABLE  
-        LEA     DX,msg1        ;CHANGE DX TO msg1
-        MOV     AH,09H        
-        INT     21H
-        
-        LEA     DX,msg3        ;CHANGE DX TO msg3 WHICH IS AN EMPTY LINE
-        MOV     AH,09H     
-        INT     21H 
-        
-        
-        
-        MOV     AH,1           ;INPUT HOW MANY CHARS IN THE INPUT STRING           
-        INT     21H  
-        SUB     AL,30H   
-        MOV     CX,0AH
-        MUL     CX 
-        MOV     CL,AL                
-                        
-        MOV     AH,1
-        INT     21H    
-        SUB     AL,30H 
-        ADD     CL,AL          ;INPUT NUMBER OF CHARS IS STORED IN CL      
-        
-        
-        LEA     DX,msg3        ;CHANGE DX TO msg3 WHICH IS AN EMPTY LINE
-        MOV     AH,09H     
-        INT     21H
+START:  
+;-------------------------------------------------------------------------
+        MOV     AX,@DATA        
+        MOV     DS,AX           ;ADDRESS FOR THE DATA  
+  
+ 
+
         
         
         LEA     DX,msg2        ;CANGE DX TO msg2
@@ -51,22 +30,38 @@ START:  MOV     AX,@DATA
         MOV     AH,09H     
         INT     21H
         
-        
-        PUSH    CX             ;SAVE THE CX 
-        LEA     BX,string      ;BX=VAR STRING ADDRESS
-        MOV     SI,0000H
+                                                        
+;-------------------------------------------------------------------------
          
+;------------INPUT STRING  CHAR BY CHAR STORED IN VAR STRING--------------      
         
-J1:     MOV     AH,1           ;INPUT STRING  CHAR BY CHAR STORED IN VAR STRING
+        MOV     AH,0AH
+        MOV     DX,OFFSET   string
         INT     21H
-        MOV     [BX+SI],AL
         
-        INC     SI
-        DEC     CL
-        JCXZ    DONE1
-        JMP     J1
+        
+        
+        
+        
+                                  
+;-------------------------------------------------------------------------     
 
-DONE1:  POP     CX             ;RESTORE  THE CX  
+;----------GET NUMBER OF CHARS--------------------------------------------
+        MOV     CX,0
+        LEA     DI,string
+        ADD     DI,2     
+LOO:    CMP     [DI],13        
+        JZ      FINISH
+        INC     CX    
+        INC     DI
+        JMP     LOO
+FINISH:
+        
+
+
+        
+
+;------------------------------------------------------------------------- 
 
         LEA     DX,msg3        ;CHANGE DX TO msg3 WHICH IS AN EMPTY LINE
         MOV     AH,09H     
@@ -82,35 +77,53 @@ DONE1:  POP     CX             ;RESTORE  THE CX
         
         
         PUSH    CX 
-        LEA     BX,string        
-        MOV     SI,0000H    
+        LEA     BX,table2                               
+       
+;-------------------------------------------------------------------------                                    
         
-        CLD
+        
+         MOV     SI,2          ;ITERATOR
           
-J2:     LEA     DI,table       ;DECRYPT TH STRING USING THE TABLE  
-        MOV     AL,[BX+SI]
-        
+;------------------ENCRYPT THE STRING USING THE TABLE--------------------
+
+  
+          
+J2:     LEA     DI,table1         
+        MOV     AL,string[SI]
+            
+
 L:      CMP     AL,[DI]
         JZ      GOTIT  
         INC     DI
-        JMP     L
-        
-GOTIT:  SUB     DI,1
-        MOV     DL,[DI] 
-        MOV     [BX+SI],DL
+        JMP     L           
+GOTIT:  
+        LEA     AX,table1
+        SUB     DI,AX
+        MOV     AX,DI
+                
+        XLAT
+        MOV     string[SI],AL
+                  
         INC     SI
-        DEC     CL
+        DEC     CL 
         JCXZ    DONE2
-        JMP     J2 
+        JMP     J2  
         
-DONE2:  POP     CX
-                     
-                     
-        
+DONE2:  POP     CX  
+
+
+
+;------------------------------------------------------------------------ 
+
+
+;-------------------PRINT THE CIPHER CHAR BY CHAR------------------------
+
         PUSH    CX
-        MOV     SI,0    
+        MOV     SI,2  
             
-J3:     MOV     AL,[BX+SI]     ;PRINT THE STRING CHAR BY CHAR 
+J3:     MOV     AL,string[SI]  
+        CMP     AL,0
+        JZ      SKIP    
         MOV     AH,0
         MOV     DL,10          ;ADJUST THE INT TO ASCII
         DIV     DL
@@ -118,28 +131,34 @@ J3:     MOV     AL,[BX+SI]     ;PRINT THE STRING CHAR BY CHAR
         
         MOV     DL,AL
         ADD     DL,48          ;CONVERT THE INTS TO THEIR ASCII VALUE
-        MOV     DH,AH
+        MOV     DH,AH  
         
+        
+        CMP     DL,'0'
+        JZ      SKIP1
         MOV     AH,2
         INT     21H
-
+SKIP1:
         XCHG    DL,DH
         ADD     DL,48     
         MOV     AH,2
         INT     21H             
                    
-        MOV     DL,','
+        MOV     DL,' '
         MOV     AH,2           
-        INT     21H
+        INT     21H 
+SKIP:
         INC     SI
         DEC     CX
         JCXZ    DONE3
         JMP     J3
 
 DONE3:  POP     CX
+;-------------------------------------------------------------------------
 
-        
-        
+
+    
+;-------------------------------------------------------------------------                           
         LEA     DX,msg3        ;CHANGE DX TO msg3 WHICH IS AN EMPTY LINE
         MOV     AH,09H     
         INT     21H
@@ -153,34 +172,44 @@ DONE3:  POP     CX
         INT     21H
         
         
-        MOV     SI,0 
-        PUSH    CX        
-        CLD
-          
-J4:     LEA     DI,table       ;DECRYPT TH STRING USING THE TABLE  
-        MOV     AL,[BX+SI]
+        MOV     SI,2 
+        PUSH    CX      
+        LEA     BX,table1 
+;-------------------------------------------------------------------------
+        
+        
+      
+;--------------------DECRYPT THE STRING USING THE TABLE-------------------        
+J4:     LEA     DI,table2         
+        MOV     AL,string[SI]
         
 L1:     CMP     AL,[DI]
         JZ      GOTIT1  
         INC     DI
         JMP     L1
         
-GOTIT1: ADD     DI,1
-        MOV     DL,[DI] 
-        MOV     [BX+SI],DL
+GOTIT1: 
+        LEA     AX,table2
+        SUB     DI,AX
+        MOV     AX,DI
+                
+        XLAT
+        MOV     string[SI],AL
+        
         INC     SI
         DEC     CL
         JCXZ    DONE4
         JMP     J4 
         
 DONE4:  POP     CX 
-         
+;-------------------------------------------------------------------------  
+       
+     
         
+;--------------------PRINT STRING CHAR BY CHAR----------------------------                
+        MOV     SI,2
         
-
-        MOV     SI,0
-        
-J5:     MOV     DL,[BX+SI]     ;PRINT THE STRING CHAR BY CHAR       
+J5:     MOV     DL,string[SI]     ;PRINT THE STRING CHAR BY CHAR       
         MOV     AH,2
         INT     21H
 
@@ -188,8 +217,17 @@ J5:     MOV     DL,[BX+SI]     ;PRINT THE STRING CHAR BY CHAR
         DEC     CX
         JCXZ    DONE5
         JMP     J5
-DONE5:  
+DONE5:       
+;-------------------------------------------------------------------------                              
         
+        LEA     DX,msg3        ;CHANGE DX TO msg3 WHICH IS AN EMPTY LINE
+        MOV     AH,09H     
+        INT     21H
+                      
+                     
+                                                           
         JMP     START
+        
+        
 MAIN ENDP 
 END MAIN 
